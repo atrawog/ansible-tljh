@@ -34,22 +34,11 @@ USER $MAMBA_USER
 
 FROM base AS core
 #ARG MAMBA_DOCKERFILE_ACTIVATE=1 
-COPY --chown=$MAMBA_USER:$MAMBA_USER env/env_core.yaml /tmp/env_core.yaml
-RUN micromamba install -y -f /tmp/env_core.yaml && micromamba clean --all --yes
+COPY --chown=$MAMBA_USER:$MAMBA_USER env.yml /tmp/env.yml 
+RUN micromamba install -y -f /tmp/env.yml && micromamba clean --all --yes
 
-FROM core AS ansible
-#ARG MAMBA_DOCKERFILE_ACTIVATE=1 
-#COPY --from=spatial /opt/conda /opt/conda
-COPY --chown=$MAMBA_USER:$MAMBA_USER env/env_ansible.yaml /tmp/env_ansible.yaml
-RUN micromamba install -y -f /tmp/env_ansible.yaml && micromamba clean --all --yes
+FROM core as devel
 
-FROM ansible as devel
-#ARG MAMBA_DOCKERFILE_ACTIVATE=1 
-
-ARG DOCKER_GID=999
-ARG KVM_GID=992
-
-#COPY --from=testing /opt/conda /opt/conda
 USER root
 RUN apt-get update && apt-get install -y build-essential openssh-client rsync sudo git apt-transport-https vim htop sysstat lsof nmap \
     ca-certificates curl gnupg lsb-release software-properties-common mkisofs qemu qemu-system qemu-utils kmod apt-file util-linux iproute2 iputils-ping && \
@@ -65,11 +54,16 @@ RUN echo \
 RUN apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN usermod -aG sudo $MAMBA_USER && echo 'jovian ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-RUN groupmod -g ${DOCKER_GID}  docker && sudo usermod -aG docker jovian
-RUN groupadd -g ${KVM_GID} kvm && sudo usermod -aG kvm jovian
+RUN usermod -aG sudo $MAMBA_USER && echo "$MAMBA_USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 RUN ln -s /bin/micromamba /bin/conda
 
 USER $MAMBA_USER
 RUN ansible-galaxy install geerlingguy.docker
 RUN pip install molecule-qemu
+
+USER root
+ARG DOCKER_GID=999
+ARG KVM_GID=992
+RUN groupmod -g ${DOCKER_GID}  docker && sudo usermod -aG docker $MAMBA_USER
+RUN groupadd -g ${KVM_GID} kvm && sudo usermod -aG kvm $MAMBA_USER
+USER $MAMBA_USER

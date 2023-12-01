@@ -10,10 +10,10 @@
 		"context": "../",
 		"args": {
 			"CONTAINER_WORKSPACE_FOLDER": "${containerWorkspaceFolder}",
-			"NEW_MAMBA_USER": "jovian",
-			"NEW_MAMBA_USER_ID": "1010",
-			"NEW_MAMBA_USER_GID": "1010",
-			"DOCKER_GID": "965",
+			// "NEW_MAMBA_USER": "jovian",
+			// "NEW_MAMBA_USER_ID": "1010",
+			// "NEW_MAMBA_USER_GID": "1010",
+			"DOCKER_GID": "962",
 			"KVM_GID": "992"
 		},
 		"cacheFrom": [
@@ -54,4 +54,10 @@
 
 	],
 
+	//"containerEnv": {
+    //    "DOCKER_GID": "962",
+    //    "KVM_GID": "992"
+    //},
+
+	"postCreateCommand": ".devcontainer/post-create.sh",
 }

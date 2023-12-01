@@ -9,6 +9,9 @@ platforms:
     image_checksum: sha512:https://cloud.debian.org/images/cloud/bookworm/latest/SHA512SUMS
     network_ssh_port: 2222
     network_extra_args: hostfwd=tcp::8000-:80,hostfwd=tcp::8443-:443
+    vm_cpus: 8 
+    vm_memory: 4096
+    vm_disk: 10G
 provisioner:
   name: ansible
 verifier:
