@@ -1,0 +1,57 @@
+{
+	"name": "tljh",
+	"containerEnv": {
+		"TZ": "Europe/Vienna",
+		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+		"CONTAINER_WORKSPACE_FOLDER": "${containerWorkspaceFolder}",
+	},
+	"build": {
+		"dockerfile": "../Dockerfile",
+		"context": "../",
+		"args": {
+			"CONTAINER_WORKSPACE_FOLDER": "${containerWorkspaceFolder}",
+			"NEW_MAMBA_USER": "jovian",
+			"NEW_MAMBA_USER_ID": "1010",
+			"NEW_MAMBA_USER_GID": "1010",
+			"DOCKER_GID": "965",
+			"KVM_GID": "992"
+		},
+		"cacheFrom": [
+			"type=registry,ref=docker.io/ecovoyage/devel:latest"
+		]
+	},
+	"extensions": [	
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-toolsai.jupyter",
+				"ms-azuretools.vscode-docker",
+				"ms-vscode.makefile-tools",
+				"ms-vscode-remote.remote-containers",
+				"ms-vscode-remote.vscode-remote-extensionpack",
+				"GitHub.copilot",
+				"GitHub.copilot-chat",
+				"ritwickdey.LiveServer"
+				"dhoeric.ansible-vault",
+				"redhat.ansible",
+				"redhat.vscode-yaml"
+				],
+	"remoteUser": "jovian",
+	"settings": { 
+		"terminal.integrated.shell.linux": "/bin/bash",
+		"files.autoSave": "afterDelay",
+		"jupyter.magicCommandsAsComments": true,
+		"python.pythonPath": "/opt/conda/bin/python",
+		"python.defaultInterpreterPath": "/opt/conda/bin/python",	
+	  },
+	"mounts": [
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+		"source=${localWorkspaceFolder}/.cache,target=/home/jovian/.cache,type=bind,consistency=cached"
+    ],
+    "runArgs": [
+		"--device=/dev/kvm",
+		"-p=8000:8000",
+		"-p=8443:8443"
+
+	],
+
+}
