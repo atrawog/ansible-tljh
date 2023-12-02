@@ -79,9 +79,10 @@ RUN apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugi
 RUN usermod -aG sudo $MAMBA_USER && echo "$MAMBA_USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 
-#USER $MAMBA_USER
-#RUN ansible-galaxy install geerlingguy.docker
-#RUN pip install molecule-qemu
+USER $MAMBA_USER
+SHELL ["/bin/bash", "--rcfile", "/$MAMBA_USER/.bashrc", "-c"]
+RUN ansible-galaxy install geerlingguy.docker
+RUN pip install molecule-qemu
 
 USER root
 ARG DOCKER_GID=999
