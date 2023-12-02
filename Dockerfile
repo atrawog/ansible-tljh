@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.2
+
 ARG BASE_IMAGE=debian:bookworm-slim
 
 FROM --platform=$BUILDPLATFORM $BASE_IMAGE AS stage1
@@ -52,15 +54,17 @@ SHELL ["/bin/bash", "--rcfile", "/$MAMBA_USER/.bashrc", "-c"]
 
 FROM base AS ansible
 COPY --chown=$MAMBA_USER:$MAMBA_USER env_ansible.yml /tmp/env_ansible.yml 
-RUN micromamba install -y -f /tmp/env_ansible.yml && micromamba clean --all --yes
+RUN --mount=type=cache,target=$MAMBA_ROOT_PREFIX/pkgs  micromamba install -y -f /tmp/env_ansible.yml
 
 
 FROM ansible as devel
 
 USER root
-RUN apt-get update && apt-get install -y build-essential openssh-client rsync sudo git apt-transport-https vim htop sysstat lsof nmap \
-    ca-certificates curl gnupg lsb-release software-properties-common mkisofs qemu-system qemu-utils kmod apt-file util-linux iproute2 iputils-ping && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
+RUN  rm -f /etc/apt/apt.conf.d/docker-*
+COPY packages.txt /tmp/packages.txt
+RUN --mount=type=cache,target=/var/cache/apt,id=aptdeb12 apt-get update && xargs apt-get install -y < /tmp/packages.txt
 
 RUN touch /var/lib/dpkg/status && install -m 0755 -d /etc/apt/keyrings
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
@@ -73,6 +77,7 @@ RUN apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugi
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN usermod -aG sudo $MAMBA_USER && echo "$MAMBA_USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
 
 #USER $MAMBA_USER
 #RUN ansible-galaxy install geerlingguy.docker

@@ -54,7 +54,8 @@
 	  },
 	"mounts": [
         "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
-		"source=${localWorkspaceFolder}/.cache,target=/home/jovian/.cache,type=bind,consistency=cached"
+		"source=${localWorkspaceFolder}/.cache,target=/home/jovian/.cache,type=bind,consistency=cached",
+		//"type=cache,target=/var/cache/apt,id=aptdeb12"
     ],
     "runArgs": [
 		"--device=/dev/kvm",
