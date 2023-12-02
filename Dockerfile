@@ -2,33 +2,35 @@
 
 ARG BASE_IMAGE=debian:bookworm-slim
 
-FROM --platform=$BUILDPLATFORM $BASE_IMAGE AS stage1
+FROM --platform=$BUILDPLATFORM $BASE_IMAGE AS fetch
 ARG VERSION=1.5.3
 
-RUN apt-get update && apt-get install -y --no-install-recommends bzip2 ca-certificates curl
+RUN  rm -f /etc/apt/apt.conf.d/docker-*
+RUN --mount=type=cache,target=/var/cache/apt,id=aptdeb12 apt-get update && apt-get install -y --no-install-recommends bzip2 ca-certificates curl
 
-ARG TARGETARCH=amd64
-RUN test "$TARGETARCH" = 'amd64' && export ARCH='64'; \
-    test "$TARGETARCH" = 'arm64' && export ARCH='aarch64'; \
-    test "$TARGETARCH" = 'ppc64le' && export ARCH='ppc64le'; \
+RUN if [ "$BUILDPLATFORM" = 'linux/arm64' ]; then \
+        export ARCH='aarch64'; \
+    else \
+        export ARCH='64'; \
+    fi; \
     curl -L "https://micro.mamba.pm/api/micromamba/linux-${ARCH}/${VERSION}" | \
     tar -xj -C "/tmp" "bin/micromamba"
+
 
 FROM $BASE_IMAGE as base
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
-#ENV ENV_NAME="base"
 ENV MAMBA_ROOT_PREFIX="/opt/conda"
-#ENV CONDA_PREFIX="$MAMBA_ROOT_PREFIX"
-#ENV CONDA_PROMPT_MODIFIER="(base)"
-#ENV CONDA_SHLVL=1
 ENV MAMBA_EXE="/bin/micromamba"
-#ENV CONDA_DEFAULT_ENV=base
 ENV PATH="${PATH}:${MAMBA_ROOT_PREFIX}/bin"
 
-COPY --from=stage1 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=stage1 /tmp/bin/micromamba "$MAMBA_EXE"
-RUN ln -s $MAMBA_EXE /bin/conda
+COPY --from=fetch /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=fetch /tmp/bin/micromamba "$MAMBA_EXE"
+
+FROM base AS ansible
+
+COPY --chown=$MAMBA_USER:$MAMBA_USER env_ansible.yml /tmp/env_ansible.yml 
+RUN --mount=type=cache,target=$MAMBA_ROOT_PREFIX/pkgs,id=mamba_pkgs  micromamba install -y -f /tmp/env_ansible.yml
 
 ARG MAMBA_USER=jovian
 ARG MAMBA_USER_ID=1000
@@ -38,31 +40,22 @@ ENV MAMBA_USER_ID=$MAMBA_USER_ID
 ENV MAMBA_USER_GID=$MAMBA_USER_GID
 
 RUN groupadd -g "${MAMBA_USER_GID}" "${MAMBA_USER}" && \
-    useradd -m -u "${MAMBA_USER_ID}" -g "${MAMBA_USER_GID}" -s /bin/bash "${MAMBA_USER}" && \
-    mkdir -p "$MAMBA_ROOT_PREFIX" && \
-    chown -R "${MAMBA_USER}" "$MAMBA_ROOT_PREFIX" && \
-    chmod -R 777 "$MAMBA_ROOT_PREFIX"
+    useradd -m -u "${MAMBA_USER_ID}" -g "${MAMBA_USER_GID}" -s /bin/bash "${MAMBA_USER}" # && \
+#    mkdir -p "$MAMBA_ROOT_PREFIX" && \
+#    chown -R "${MAMBA_USER}" "$MAMBA_ROOT_PREFIX" && \
+#    chmod -R 777 "$MAMBA_ROOT_PREFIX"
+USER $MAMBA_USER
 
-# Create and set the workspace folder
+
+FROM ansible as ansible-devel
+
+
+USER root
 ARG CONTAINER_WORKSPACE_FOLDER=/workspaces/ansible-tljh
 RUN mkdir -p "${CONTAINER_WORKSPACE_FOLDER}"
 WORKDIR "${CONTAINER_WORKSPACE_FOLDER}"
 
-USER $MAMBA_USER
-RUN micromamba shell init --shell bash --prefix=$MAMBA_ROOT_PREFIX
-SHELL ["/bin/bash", "--rcfile", "/$MAMBA_USER/.bashrc", "-c"]
 
-FROM base AS ansible
-COPY --chown=$MAMBA_USER:$MAMBA_USER env_ansible.yml /tmp/env_ansible.yml 
-RUN --mount=type=cache,target=$MAMBA_ROOT_PREFIX/pkgs  micromamba install -y -f /tmp/env_ansible.yml
-
-
-FROM ansible as devel
-
-USER root
-
-
-RUN  rm -f /etc/apt/apt.conf.d/docker-*
 COPY packages.txt /tmp/packages.txt
 RUN --mount=type=cache,target=/var/cache/apt,id=aptdeb12 apt-get update && xargs apt-get install -y < /tmp/packages.txt
 
@@ -73,18 +66,28 @@ RUN echo \
   "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
   "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && apt-get update
-RUN apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
+RUN --mount=type=cache,target=/var/cache/apt,id=aptdeb12 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 RUN usermod -aG sudo $MAMBA_USER && echo "$MAMBA_USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 
 USER $MAMBA_USER
+RUN micromamba shell init --shell bash --prefix=$MAMBA_ROOT_PREFIX
 SHELL ["/bin/bash", "--rcfile", "/$MAMBA_USER/.bashrc", "-c"]
 RUN ansible-galaxy install geerlingguy.docker
 RUN pip install molecule-qemu
 
 USER root
+
+# Copy the fix-permissions.sh script to /bin
+COPY .devcontainer/fix-permissions.sh /bin/fix-permissions.sh
+
+# Make the script executable
+RUN chmod +x /bin/fix-permissions.sh
+
+# Append the execution of the script to .bashrc of the user
+RUN echo "/bin/fix-permissions.sh" >> /home/$MAMBA_USER/.bashrc
+
+
 ARG DOCKER_GID=999
 ARG KVM_GID=992
 
@@ -92,4 +95,6 @@ RUN getent group ${DOCKER_GID} || groupmod -g ${DOCKER_GID} docker
 RUN usermod -aG docker $MAMBA_USER
 
 RUN groupadd -g ${KVM_GID} kvm && usermod -aG kvm $MAMBA_USER
+
+
 USER $MAMBA_USER

@@ -2,8 +2,7 @@
 	"name": "tljh",
 	"containerEnv": {
 		"TZ": "Europe/Vienna",
-		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
-		"CONTAINER_WORKSPACE_FOLDER": "${containerWorkspaceFolder}",
+		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
 	},
 	"build": {
 		"dockerfile": "../Dockerfile",
@@ -30,7 +29,7 @@
 				"ms-vscode-remote.vscode-remote-extensionpack",
 				"GitHub.copilot",
 				"GitHub.copilot-chat",
-				"ritwickdey.LiveServer"
+				"ritwickdey.LiveServer",
 				"dhoeric.ansible-vault",
 				"redhat.ansible",
 				"redhat.vscode-yaml"
@@ -42,7 +41,7 @@
         "terminal.integrated.defaultProfile.linux": "bash",
         "terminal.integrated.profiles.linux": {
             "bash": {
-                "path": "/bin/bash",
+                "path": "/bin/bash"
                 //"args": ["-c", "eval \"$(micromamba shell hook --shell bash --prefix=/opt/conda)\" && exec /bin/bash"]
             }
         },
@@ -50,23 +49,23 @@
 		"python.pythonPath": "/opt/conda/bin/python",
 		"python.defaultInterpreterPath": "/opt/conda/bin/python",
 		"jupyter.interactiveWindow.textEditor.magicCommandsAsComments": true,
-		"python.terminal.activateEnvironment": false,	
+		"python.terminal.activateEnvironment": true	
 	  },
 	"mounts": [
         "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
-		"source=${localWorkspaceFolder}/.cache,target=/home/jovian/.cache,type=bind,consistency=cached",
+		"source=${localWorkspaceFolder}/.cache,target=/home/jovian/.cache,type=bind,consistency=cached"
 		//"type=cache,target=/var/cache/apt,id=aptdeb12"
     ],
     "runArgs": [
 		"--device=/dev/kvm",
 		"-p=8000:8000",
 		"-p=8443:8443"
-	],
+	]
 
 	//"containerEnv": {
     //    "DOCKER_GID": "962",
     //    "KVM_GID": "992"
     //},
 
-	"postCreateCommand": ".devcontainer/post-create.sh",
+	// "postCreateCommand": ".devcontainer/post-create.sh",
 }
