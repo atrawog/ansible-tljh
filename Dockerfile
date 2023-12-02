@@ -85,7 +85,8 @@ COPY .devcontainer/fix-permissions.sh /bin/fix-permissions.sh
 RUN chmod +x /bin/fix-permissions.sh
 
 # Append the execution of the script to .bashrc of the user
-RUN echo "/bin/fix-permissions.sh" >> /home/$MAMBA_USER/.bashrc
+RUN echo "/bin/fix-permissions.sh" >> /home/$MAMBA_USER/.bashrc && \
+    echo "micromamba activate" >> /home/$MAMBA_USER/.bashrc
 
 
 ARG DOCKER_GID=999

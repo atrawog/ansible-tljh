@@ -42,30 +42,21 @@
         "terminal.integrated.profiles.linux": {
             "bash": {
                 "path": "/bin/bash"
-                //"args": ["-c", "eval \"$(micromamba shell hook --shell bash --prefix=/opt/conda)\" && exec /bin/bash"]
             }
         },
 		"files.autoSave": "afterDelay",
 		"python.pythonPath": "/opt/conda/bin/python",
 		"python.defaultInterpreterPath": "/opt/conda/bin/python",
 		"jupyter.interactiveWindow.textEditor.magicCommandsAsComments": true,
-		"python.terminal.activateEnvironment": true	
+		"python.terminal.activateEnvironment": false	
 	  },
 	"mounts": [
         "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
 		"source=${localWorkspaceFolder}/.cache,target=/home/jovian/.cache,type=bind,consistency=cached"
-		//"type=cache,target=/var/cache/apt,id=aptdeb12"
     ],
     "runArgs": [
 		"--device=/dev/kvm",
 		"-p=8000:8000",
 		"-p=8443:8443"
 	]
-
-	//"containerEnv": {
-    //    "DOCKER_GID": "962",
-    //    "KVM_GID": "992"
-    //},
-
-	// "postCreateCommand": ".devcontainer/post-create.sh",
 }

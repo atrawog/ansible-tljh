@@ -12,7 +12,7 @@
 
     # Check if the user has sudo permissions
     if has_sudo; then
-        echo "User has sudo permissions."
+        # echo "User has sudo permissions."
 
         # Get the current user's UID and GID
         user_uid=$(id -u)
@@ -24,13 +24,13 @@
 
         # Compare the UID and GID of the user and the directory
         if [ "$user_uid" != "$directory_uid" ] || [ "$user_gid" != "$directory_gid" ]; then
-            echo "UID and GID of $MAMBA_ROOT_PREFIX differ from the user. Changing them now."
+            # echo "UID and GID of $MAMBA_ROOT_PREFIX differ from the user. Changing them now."
             sudo chown -R $user_uid:$user_gid "$MAMBA_ROOT_PREFIX"
-            echo "UID and GID of $MAMBA_ROOT_PREFIX have been changed to match the user."
-        else
-            echo "UID and GID of $MAMBA_ROOT_PREFIX already match the user."
+            #echo "UID and GID of $MAMBA_ROOT_PREFIX have been changed to match the user."
+        #else
+        #    echo "UID and GID of $MAMBA_ROOT_PREFIX already match the user."
         fi
     else
-        echo "User does not have sudo permissions."
+        echo "User does not have sudo permissions. Can't set permissions for $MAMBA_ROOT_PREFIX."
     fi
     

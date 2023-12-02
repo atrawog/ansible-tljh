@@ -3,5 +3,8 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"ansible.python.interpreterPath": "/opt/conda/bin/python"
+	}
 }
