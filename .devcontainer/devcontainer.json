@@ -38,10 +38,19 @@
 	"remoteUser": "jovian",
 	"settings": { 
 		"terminal.integrated.shell.linux": "/bin/bash",
+        "terminal.integrated.shellArgs.linux": ["-c"],
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+            "bash": {
+                "path": "/bin/bash",
+                //"args": ["-c", "eval \"$(micromamba shell hook --shell bash --prefix=/opt/conda)\" && exec /bin/bash"]
+            }
+        },
 		"files.autoSave": "afterDelay",
-		"jupyter.magicCommandsAsComments": true,
 		"python.pythonPath": "/opt/conda/bin/python",
-		"python.defaultInterpreterPath": "/opt/conda/bin/python",	
+		"python.defaultInterpreterPath": "/opt/conda/bin/python",
+		"jupyter.interactiveWindow.textEditor.magicCommandsAsComments": true,
+		"python.terminal.activateEnvironment": false,	
 	  },
 	"mounts": [
         "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
@@ -51,7 +60,6 @@
 		"--device=/dev/kvm",
 		"-p=8000:8000",
 		"-p=8443:8443"
-
 	],
 
 	//"containerEnv": {
