@@ -1,22 +1,23 @@
 {
-	"name": "tljh",
+	"name": "jupyter-devcontainer",
 	"containerEnv": {
 		"TZ": "Europe/Vienna",
 		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
 	},
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+	"workspaceFolder": "/workspace",
+
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"context": "../",
 		"args": {
-			"CONTAINER_WORKSPACE_FOLDER": "${containerWorkspaceFolder}",
+			// "CONTAINER_WORKSPACE_FOLDER": "/workspace",
 			// "NEW_MAMBA_USER": "jovian",
 			// "NEW_MAMBA_USER_ID": "1010",
 			// "NEW_MAMBA_USER_GID": "1010",
-			"DOCKER_GID": "962",
-			"KVM_GID": "992"
 		},
 		"cacheFrom": [
-			"type=registry,ref=docker.io/ecovoyage/devel:latest"
+			"type=registry,ref=docker.io/atrawog/jupyter-devel:latest"
 		]
 	},
 	"extensions": [	
@@ -56,7 +57,13 @@
     ],
     "runArgs": [
 		"--device=/dev/kvm",
+		"--ulimit", "nofile=1048576:1048576"
 		"-p=8000:8000",
-		"-p=8443:8443"
-	]
+		"-p=8443:8443",
+
+	],
+	"containerEnv": {
+		"KVM_DEVICE": "/dev/kvm",
+		"DOCKER_SOCKET": "/var/run/docker.sock"
+	}
 }
